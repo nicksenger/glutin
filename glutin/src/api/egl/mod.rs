@@ -740,8 +740,20 @@ impl<'a> ContextPrototype<'a> {
     pub fn finish(self, nwin: ffi::EGLNativeWindowType) -> Result<Context, CreationError> {
         let egl = EGL.as_ref().unwrap();
         let surface = unsafe {
+            let colorspace = if self.pixel_format.srgb {
+                ffi::egl::GL_COLORSPACE_SRGB
+            } else {
+                ffi::egl::GL_COLORSPACE_LINEAR
+            };
+
+            let attrs = &[
+                ffi::egl::GL_COLORSPACE as raw::c_int,
+                colorspace as raw::c_int,
+                ffi::egl::NONE as raw::c_int,
+            ];
+
             let surface =
-                egl.CreateWindowSurface(self.display, self.config_id, nwin, std::ptr::null());
+                egl.CreateWindowSurface(self.display, self.config_id, nwin, attrs.as_ptr());
             if surface.is_null() {
                 return Err(CreationError::OsError("eglCreateWindowSurface failed".to_string()));
             }
@@ -1040,8 +1052,6 @@ where
             out.push(xid as raw::c_int);
         }
 
-        // FIXME: srgb is not taken into account
-
         match pf_reqs.release_behavior {
             ReleaseBehavior::Flush => (),
             ReleaseBehavior::None => {
@@ -1152,7 +1162,7 @@ where
             0 | 1 => None,
             a => Some(a as u16),
         },
-        srgb: false, // TODO: use EGL_KHR_gl_colorspace to know that
+        srgb: pf_reqs.srgb,
     };
 
     Ok((config_id, desc))

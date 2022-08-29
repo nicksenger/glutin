@@ -38,6 +38,7 @@ fn main() {
                 "EGL_KHR_platform_wayland",
                 "EGL_KHR_platform_x11",
                 "EGL_KHR_swap_buffers_with_damage",
+                "EGL_KHR_gl_colorspace",
                 "EGL_MESA_platform_gbm",
             ],
         );
